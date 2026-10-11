@@ -5,6 +5,7 @@ const IMG="https://i.scdn.co/image/ab67616d0000b273", PRE="https://p.scdn.co/mp3
 let mode="audio", tracks=[], pool=[], cur=null, attempt=0, guesses=[], over=false;
 let timer=null, raf=null, playing=false, wins=0, played=0, prevN=0, netErr=false;
 const audio = $("audio");
+let guessedTracks = new Set(), guessedKeys = new Set();  // palpites já feitos na rodada
 
 /* ---------- utilidades ---------- */
 const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -127,7 +128,6 @@ async function begin(useDemo){
     }
   }catch(e){ return say(msg,e.message||"Erro ao ler o arquivo.",true); }
   tracks=list; pool=[]; wins=played=0;
-  $("songs").innerHTML=tracks.map(t=>`<option value="${(t.title+" — "+t.artist).replace(/"/g,"&quot;")}">`).join("");
   $("setup").classList.add("hidden"); $("game").classList.remove("hidden");
   newRound();
 }
@@ -136,9 +136,20 @@ $("demo").onclick=()=>begin(true);
 $("back").onclick=()=>{ stop(); cur=null; $("game").classList.add("hidden"); $("setup").classList.remove("hidden"); };
 
 /* ---------- rodada ---------- */
+function refreshOptions(){
+  $("songs").innerHTML = tracks.filter(t=>!guessedTracks.has(t))
+    .map(t=>`<option value="${(t.title+" — "+t.artist).replace(/"/g,"&quot;")}">`).join("");
+}
+function matchTrack(raw){
+  const exact = tracks.find(t => t.title+" — "+t.artist === raw.trim());
+  if(exact) return exact;
+  const g = norm(raw.replace(/—.*$/,""));
+  return g ? (tracks.find(t=>norm(t.title)===g && !guessedTracks.has(t)) || tracks.find(t=>norm(t.title)===g)) : null;
+}
 const lock = b => { $("play").disabled=$("send").disabled=$("skip").disabled=$("guess").disabled=b; };
 async function newRound(){
   stop(); over=false; attempt=0; guesses=[]; cur=null; prevN=0;
+  guessedTracks=new Set(); guessedKeys=new Set(); refreshOptions();
   audio.removeAttribute("src"); audio.load();
   $("end").classList.add("hidden"); $("guessBox").classList.remove("hidden");
   $("guess").value=""; lock(true); render();
@@ -231,6 +242,14 @@ function evaluate(raw){
 }
 function answer(text, forced){
   if(over||!cur) return;
+  if(!forced){
+    const m=matchTrack(text), key=norm(text.replace(/—.*$/,""));
+    if((m && guessedTracks.has(m)) || guessedKeys.has(key)){
+      say($("gmsg"),"Você já chutou essa música. Escolha outra.",true); $("guess").select(); return;
+    }
+    if(m) guessedTracks.add(m);
+    guessedKeys.add(key); refreshOptions();
+  }
   stop();
   const cls=forced||evaluate(text);
   guesses[attempt]={text:forced?"Pulado":text, cls, fresh:true};
