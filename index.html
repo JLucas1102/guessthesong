@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guess the Song</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+
+<!-- TELA 1 -->
+<section id="setup">
+  <h1>Guess the <span>Song</span></h1>
+  <p class="sub">Descubra a música da sua playlist em até 5 tentativas. Escolha como quer jogar:</p>
+  <button class="ghost help-btn open-help" type="button">Como jogar</button>
+
+  <div class="modes" role="radiogroup" aria-label="Modo de jogo">
+    <button class="mode on" data-m="audio" role="radio" aria-checked="true"><b>Com áudio</b><small>Trechos de 0,5s até 6s</small></button>
+    <button class="mode" data-m="lyrics" role="radio" aria-checked="false"><b>Com letra</b><small>De 3 até 16 palavras</small></button>
+  </div>
+
+  <label for="file">Arquivo CSV da sua playlist</label>
+  <input id="file" type="file" accept=".csv,text/csv">
+  <p class="hint"><a href="https://exportify.app/" target="_blank" rel="noopener">Converta sua playlist do Spotify para CSV</a></p>
+
+  <div class="row">
+    <button class="primary" id="start">Iniciar Jogo</button>
+    <button class="ghost" id="demo">Jogar com minha playlist demo</button>
+  </div>
+  <div class="msg" id="msg" role="status"></div>
+</section>
+
+<!-- TELA 2 -->
+<section id="game" class="hidden">
+  <div class="top">
+    <div><h1 style="font-size:1.4rem">Guess the <span>Song</span></h1><small id="stats"></small></div>
+    <div class="top-links">
+      <button class="link open-help" type="button">Como jogar</button>
+      <button class="link" id="back">Trocar playlist ou modo</button>
+    </div>
+  </div>
+
+  <div class="slots" id="slots" aria-label="Histórico de tentativas"></div>
+
+  <div class="lyr hidden" id="lyr" aria-live="polite"></div>
+
+  <div class="player" id="player">
+    <button id="play" aria-label="Tocar">▶</button>
+    <div class="bar">
+      <div class="track">
+        <div class="unlocked" id="unl"></div>
+        <div class="fill" id="fill"></div>
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <div class="dur"><span id="dur"></span><span id="att"></span></div>
+    </div>
+  </div>
+  <div class="dur hidden" id="lyrInfo"><span id="dur2"></span><span id="att2"></span></div>
+
+  <div class="guess" id="guessBox">
+    <input id="guess" list="songs" placeholder="Digite o nome da música ou artista" autocomplete="off">
+    <datalist id="songs"></datalist>
+    <div class="row">
+      <button class="ghost" id="skip">Pular / Próximo Trecho</button>
+      <button class="primary" id="send">Enviar Chute</button>
+    </div>
+  </div>
+
+  <div class="end hidden" id="end">
+    <img id="cover" alt="Capa do álbum">
+    <div>
+      <div class="res" id="res"></div>
+      <h2 id="rt"></h2>
+      <p id="ra"></p>
+      <div class="row" style="margin-top:12px"><button class="primary" id="next">Próxima música</button></div>
+    </div>
+  </div>
+  <div class="msg" id="gmsg" role="status"></div>
+</section>
+
+</main>
+
+<!-- TUTORIAL -->
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="help-head">
+    <h2 id="helpTitle">Como jogar</h2>
+    <button class="link" id="helpX" type="button" aria-label="Fechar">✕</button>
+  </div>
+
+  <h3>O jogo</h3>
+  <ol>
+    <li>Escolha o modo: <b>Com áudio</b> (trechos de 0,5s, 1s, 2s, 4s e 6s) ou <b>Com letra</b> (3, 5, 8, 12 e 16 palavras).</li>
+    <li>Carregue o CSV da sua playlist (veja abaixo) e clique em <b>Iniciar Jogo</b>, ou toque em <b>Jogar com minha playlist demo</b>.</li>
+    <li>No modo áudio, toque em ▶ para ouvir o trecho. No modo letra, leia as palavras mostradas.</li>
+    <li>Digite o nome da música ou do artista e clique em <b>Enviar Chute</b>. Sugestões da playlist aparecem enquanto você digita.</li>
+    <li>Se não souber, use <b>Pular</b>: você libera um trecho maior, mas gasta uma tentativa.</li>
+    <li>Você tem <b>5 tentativas</b>. Ao acertar ou esgotá-las, a resposta aparece e a música toca sozinha.</li>
+  </ol>
+
+  <h3>Cores dos palpites</h3>
+  <ul class="legend">
+    <li><i class="dot g"></i><b>Verde:</b> acertou a música.</li>
+    <li><i class="dot y"></i><b>Amarelo:</b> acertou o artista, mas não a música.</li>
+    <li><i class="dot r"></i><b>Vermelho:</b> errou, ou pulou a tentativa.</li>
+  </ul>
+
+  <h3>Como converter sua playlist do Spotify para CSV</h3>
+  <ol>
+    <li>Abra <a href="https://exportify.app/" target="_blank" rel="noopener">exportify.app</a> e clique em <b>Get Started</b>.</li>
+    <li>Entre com sua conta do Spotify e autorize o acesso de leitura às suas playlists.</li>
+    <li>Encontre a playlist na lista (há um campo de busca) e clique em <b>Export</b>.</li>
+    <li>O navegador baixa um arquivo <b>.csv</b> com as músicas.</li>
+    <li>Volte aqui, escolha esse arquivo em <b>Arquivo CSV da sua playlist</b> e clique em <b>Iniciar Jogo</b>.</li>
+  </ol>
+
+  <div class="row"><button class="primary" id="helpOk" type="button">Entendi</button></div>
+</dialog>
+
+<audio id="audio" preload="auto"></audio>
+
+<script src="js/demo.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
