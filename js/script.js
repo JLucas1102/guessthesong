@@ -140,6 +140,15 @@ function refreshOptions(){
   $("songs").innerHTML = tracks.filter(t=>!guessedTracks.has(t))
     .map(t=>`<option value="${(t.title+" — "+t.artist).replace(/"/g,"&quot;")}">`).join("");
 }
+function isKnown(raw){   // o palpite precisa ser uma música ou artista da playlist
+  const g=norm(raw.replace(/—.*$/,"")), full=norm(raw), f=" "+full+" ";
+  if(!g) return false;
+  return tracks.some(t=>{
+    const nt=norm(t.title);
+    if(nt===g || nt===full || (nt.length>=3 && f.includes(" "+nt+" "))) return true;
+    return [t.artist,...t.artists,...t.artist.split(/,|;/)].some(a=>{ a=norm(a); return a && (a===g || a===full); });
+  });
+}
 function matchTrack(raw){
   const exact = tracks.find(t => t.title+" — "+t.artist === raw.trim());
   if(exact) return exact;
@@ -243,6 +252,9 @@ function evaluate(raw){
 function answer(text, forced){
   if(over||!cur) return;
   if(!forced){
+    if(!isKnown(text)){
+      say($("gmsg"),"Não encontrei essa música ou artista na playlist. Escolha uma das sugestões.",true); $("guess").select(); return;
+    }
     const m=matchTrack(text), key=norm(text.replace(/—.*$/,""));
     if((m && guessedTracks.has(m)) || guessedKeys.has(key)){
       say($("gmsg"),"Você já chutou essa música. Escolha outra.",true); $("guess").select(); return;
